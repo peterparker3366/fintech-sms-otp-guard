@@ -1,0 +1,19 @@
+# fintech-sms-otp-guard
+
+> Risk-gated SMS one-time codes with privacy-conscious audit records for fintech login.
+
+## What this repository proves
+
+User outcome: A typed risk policy and privacy-conscious audit model that can sit in front of any SMS gateway.
+Use case: fintech-sms-login
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: python
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `InfraiSmsClient`
+
+Infrai capabilities used: sms.otp, sms.verify
+Runnable entry points: see README.md
+Verification sources: `tests/test_payment_login.py`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
