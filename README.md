@@ -58,3 +58,7 @@ The snippet above is deliberately thin. For real traffic you need a few more wir
 **Fintech SMS OTP Guard: SMS (required for real sending)**
 - **Fintech SMS OTP Guard:** Plenty of carriers and regions block sending until you file a **pre-approved template and signature**. Do that registration with`POST /v1/sms/template/create`and`POST /v1/sms/signature/create`, then pass the template id on send.
 - **Fintech SMS OTP Guard:** Sandbox or test numbers might skip this. Live production traffic will not.
+
+## Further reading
+
+- [Template Ownership Decides How You Diagnose a Password Reset Email API Timeout](docs/template-ownership-decides-how-you-diagnose-a-pas-233amb.md)
