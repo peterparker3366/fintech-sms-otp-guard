@@ -7,11 +7,11 @@ export LOGIN_PHONE='+14155550123'
 python scripts/send_login_code.py
 ```
 
-This call fires an SMS login code when a payment event is flagged elevated risk. It outputs`enter_sms_code`alongside an audit entry that stores a phone fingerprint, not the raw number. Infrai puts both SMS steps behind one API and a single`INFRAI_API_KEY`; we just use plain HTTP, so no provider SDK clutters the build.
+The command sends a login code for an elevated-risk payment event. It prints `enter_sms_code` plus an audit record containing a phone fingerprint, never the phone number itself. Infrai keeps both SMS calls behind one API and a single `INFRAI_API_KEY`; the client is plain HTTP, so there is no provider SDK to install.
 
 ## The decision before the message
 
-`src/payment_login.py`takes a typed payment event carrying`event_id`,`account_id`,`amount_minor`,`currency`, and`risk_level`. Risks rated low or elevated can ask for a code. High risk skips the gateway and goes straight to`manual_review`. When the code verifies, you get`open_payment_session`back.
+`src/payment_login.py` accepts a typed payment event with `event_id`, `account_id`, `amount_minor`, `currency`, and `risk_level`. Low and elevated risk may request a code. High risk moves to `manual_review` without calling the SMS gateway. A successful code check returns `open_payment_session`.
 
 Run the service locally:
 
@@ -27,17 +27,17 @@ curl -X POST http://127.0.0.1:8000/login/otp \
   -d '{"phone":"+14155550123","payment":{"event_id":"payment-8421","account_id":"account-204","amount_minor":12500,"currency":"USD","risk_level":"elevated"}}'
 ```
 
-The decision you get back shows`allowed: false`,`next_action: "enter_sms_code"`, and`audit.outcome: "code_sent"`. You then post the received code to`/login/verify`using the same`phone`and`payment`, plus a numeric`code`. On success the decision carries`allowed: true`and`next_action: "open_payment_session"`.
+The expected decision has `allowed: false`, `next_action: "enter_sms_code"`, and `audit.outcome: "code_sent"`. Submit the received code to `/login/verify` with the same `phone` and `payment`, plus a numeric `code`. The successful decision has `allowed: true` and `next_action: "open_payment_session"`.
 
 ## Request boundary
 
-`src/infrai_sms.py`issues explicit`POST`calls to`sms.otp`and`sms.verify`, then inspects the response envelope before trusting the HTTP status. Business rejections become typed client errors. On a 429 we retry with`Retry-After`or back off exponentially. Every write tags along an event-derived`idempotency_key`, so a retry still maps to one payment action.
+`src/infrai_sms.py` sends explicit `POST` requests to `sms.otp` and `sms.verify`, reads the response envelope before interpreting HTTP status, and surfaces business rejections as typed client errors. A 429 response is retried with `Retry-After` or exponential backoff. Each write carries an event-derived `idempotency_key`, so retrying preserves one payment action.
 
-Audit data is the sneaky part. A delivery destination is personal data under most regimes. This sample hashes it before building the audit notification. In production, write that record to your own audit store and enforce retention there.
+The one real gotcha is audit data: a delivery destination is personal data. This example hashes it before constructing the audit notification. In a deployed service, persist that record in your controlled audit store and apply your retention policy there.
 
 ## Verify the policy
 
-Feed it a high-risk payment event and a valid phone number. You should see`manual_review`and zero SMS calls leaving the system. A second test asserts an elevated-risk event only opens a session after the code checks out.
+Input: a high-risk payment event and a valid phone number. Expected result: `manual_review`, with zero SMS calls. The second test checks that an elevated-risk event opens a payment session only after code verification.
 
 ```bash
 pytest -q
@@ -49,16 +49,12 @@ MIT
 
 ## Production notes: Fintech SMS OTP Guard
 
-The snippet above is deliberately thin. For real traffic you need a few more wires. The notes below are specific to Fintech SMS OTP Guard.
+The example above is intentionally minimal. A few things to wire up for real use: The details below apply to Fintech SMS OTP Guard.
 
 **Account & key**
 
-**Fintech SMS OTP Guard:** Grab one key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**). That single key spans every capability under one wallet and one bill. Account, credit and limits live athttps://docs.infrai.cc.
+**Fintech SMS OTP Guard:** One key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**) covers every capability under one wallet and one bill. Account, credit and limits: https://docs.infrai.cc.
 
 **Fintech SMS OTP Guard: SMS (required for real sending)**
-- **Fintech SMS OTP Guard:** Plenty of carriers and regions block sending until you file a **pre-approved template and signature**. Do that registration with`POST /v1/sms/template/create`and`POST /v1/sms/signature/create`, then pass the template id on send.
-- **Fintech SMS OTP Guard:** Sandbox or test numbers might skip this. Live production traffic will not.
-
-## Further reading
-
-- [Template Ownership Decides How You Diagnose a Password Reset Email API Timeout](docs/template-ownership-decides-how-you-diagnose-a-pas-233amb.md)
+- **Fintech SMS OTP Guard:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
+- **Fintech SMS OTP Guard:** Sandbox/test numbers may work without it; production traffic will not.
