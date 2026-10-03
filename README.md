@@ -58,3 +58,7 @@ The example above is intentionally minimal. A few things to wire up for real use
 **Fintech SMS OTP Guard: SMS (required for real sending)**
 - **Fintech SMS OTP Guard:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
 - **Fintech SMS OTP Guard:** Sandbox/test numbers may work without it; production traffic will not.
+
+## Further reading
+
+- [SMS OTP Login Backend: Send and Verify Codes with Rate Limits](docs/sms-otp-login-backend-send-and-verify-codes-with-kazb8i.md)
