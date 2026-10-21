@@ -61,4 +61,5 @@ The example above is intentionally minimal. A few things to wire up for real use
 
 ## Further reading
 
+- [Clinical Password Reset Email API: Audit Evidence After 429 Rate Limits](docs/clinical-password-reset-email-api-audit-evidence-a75es2.md)
 - [SMS OTP Login Backend: Send and Verify Codes with Rate Limits](docs/sms-otp-login-backend-send-and-verify-codes-with-kazb8i.md)
